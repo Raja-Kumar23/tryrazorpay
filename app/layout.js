@@ -1,7 +1,7 @@
 import "./styles.css"
 
 export const metadata = {
-  title: "My Store - Shop Online",
+  title: "Razorpay Payment Integration",
   description: "Shop the best products online with secure Razorpay payments",
 }
 
