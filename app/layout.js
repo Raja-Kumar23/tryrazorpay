@@ -1,14 +1,17 @@
 import "./styles.css"
+import { AuthProvider } from "@/context/auth-context"
 
 export const metadata = {
-  title: "Razorpay Payment Integration",
+  title: "My Store - Shop Online",
   description: "Shop the best products online with secure Razorpay payments",
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }

@@ -1,6 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { useAuth } from "@/context/auth-context"
 import "./styles.css"
 
 // Sample products data
@@ -54,6 +57,15 @@ export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [toast, setToast] = useState({ show: false, message: "" })
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const { user, loading, logout, addOrder } = useAuth()
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login")
+    }
+  }, [user, loading, router])
 
   // Show toast notification
   const showToast = (message) => {
@@ -142,17 +154,24 @@ export default function Home() {
             const verifyData = await verifyResponse.json()
 
             if (verifyData.success) {
+              // Save order
+              addOrder({
+                items: [...cart],
+                total: cartTotal,
+                paymentId: response.razorpay_payment_id,
+                orderId: response.razorpay_order_id,
+              })
               setCart([])
               setIsCartOpen(false)
-              showToast("Payment successful! Thank you for your order.")
+              showToast("Payment successful! Order placed.")
             } else {
               showToast("Payment verification failed. Please contact support.")
             }
           },
           prefill: {
-            name: "",
-            email: "",
-            contact: "",
+            name: user?.displayName || "",
+            email: user?.email || "",
+            contact: user?.phoneNumber || "",
           },
           theme: {
             color: "#2563eb",
@@ -170,21 +189,50 @@ export default function Home() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="loading-page">
+        <span className="loading"></span>
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
+
   return (
     <div>
       {/* Header */}
       <header className="header">
-        <div className="logo">My Store</div>
-        <button className="cart-button" onClick={() => setIsCartOpen(true)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="9" cy="21" r="1" />
-            <circle cx="20" cy="21" r="1" />
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-          </svg>
-          Cart
-          {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
-        </button>
+        <Link href="/" className="logo">
+          My Store
+        </Link>
+        <nav className="header-nav">
+          <Link href="/" className="nav-link active">
+            Shop
+          </Link>
+          <Link href="/orders" className="nav-link">
+            My Orders
+          </Link>
+          <button className="cart-button" onClick={() => setIsCartOpen(true)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            Cart
+            {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
+          </button>
+          <button className="logout-btn" onClick={logout}>
+            Logout
+          </button>
+        </nav>
       </header>
+
+      {/* Welcome Message */}
+      <div className="welcome-banner">Welcome, {user.phoneNumber}</div>
 
       {/* Main Content */}
       <main className="container">
